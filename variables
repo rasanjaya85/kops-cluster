@@ -1,0 +1,4 @@
+DOMAIN_NAME=wso2.k8s.local
+export KOPS_CLUSTER_NAME=wso2.k8s.local
+export KOPS_STATE_STORE=s3://${DOMAIN_NAME}
+

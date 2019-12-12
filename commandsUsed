@@ -1,0 +1,55 @@
+// configure aws credentials
+$aws configure
+
+// Create the KOPS persist storage
+$ aws s3api create-bucket \
+--bucket ${DOMAIN_NAME} \
+--region us-east-1
+
+// Enable the bucket versioning  on S3 bucket
+$ aws s3api put-bucket-versioning --bucket ${DOMAIN_NAME} --versioning-configuration Status=Enabled
+
+
+// Create the Kubernetes cluster using KOPS
+$ kops create cluster \
+       --state "${KOPS_STATE_STORE}" \
+       --zones "us-east-1b"  \
+       --master-count 1 \
+       --master-size=t2.large\
+       --node-count 2 \
+       --node-size=t2.large\
+       --name ${KOPS_CLUSTER_NAME}\
+       --yes
+       
+$ Validate the KOPS cluster        
+$ kops validate cluster \
+       --state "${KOPS_STATE_STORE}" \
+       --name ${KOPS_CLUSTER_NAME}
+
+
+// Check the cluster availability
+$ kubectl cluster-info
+
+// Install the Kubernetes Dashboard 
+$ kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/master/src/deploy/recommended/kubernetes-dashboard.yaml
+
+// Retrieve the secret tocken 
+$ kops get secrets kube --type secret -oplaintext
+$ kops get secrets admin --type secret -oplaintext
+
+
+// Edit the KOPS cluster 
+$ kops edit ig --name=${KOPS_CLUSTER_NAME}  nodes
+$ kops edit cluster \
+     --state s3://"${KOPS_CLUSTER_NAME}"
+
+// Apply the changes once edited the KOPS cluster 
+$ kops update cluster  \
+     --state "${KOPS_CLUSTER_NAME}" \
+     --yes
+
+// Delete the KOPS cluster 
+$ kops delete cluster \
+       --state "${KOPS_STATE_STORE}" \
+       --name ${KOPS_CLUSTER_NAME} \
+       --yes
